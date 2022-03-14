@@ -13,7 +13,8 @@ namespace GradeBook.GradeBooks
     {
         public string Name { get; set; }
         public List<Student> Students { get; set; }
-        public GradeBookType Type {get; set;}
+
+        public GradeBookType Type { get; set; }
 
         public BaseGradeBook(string name)
         {
@@ -75,7 +76,7 @@ namespace GradeBook.GradeBooks
             }
         }
 
-        public static object Load(string name)
+        public static BaseGradeBook Load(string name)
         {
             if (!File.Exists(name + ".gdbk"))
             {
@@ -83,29 +84,12 @@ namespace GradeBook.GradeBooks
                 return null;
             }
 
-            BaseGradeBook gradeBook;
-
             using (var file = new FileStream(name + ".gdbk", FileMode.Open, FileAccess.Read))
             {
                 using (var reader = new StreamReader(file))
                 {
                     var json = reader.ReadToEnd();
-                    var jobject = JsonConvert.DeserializeObject<JObject>(json);
-                    var type = Enum.Parse(typeof(GradeBookType),jobject.GetValue("Type").ToString(),true);
-                    switch(type)
-                    {
-                        case GradeBookType.Standard:
-                            gradeBook = JsonConvert.DeserializeObject<StandardGradeBook>(json);
-                            break;
-                        case GradeBookType.Ranked:
-                            gradeBook = JsonConvert.DeserializeObject<RankedGradeBook>(json);
-                            break;
-                        default:
-                            gradeBook = JsonConvert.DeserializeObject<StandardGradeBook>(json);
-                            break;
-                    }
-
-                    return gradeBook;
+                    return ConvertToGradeBook(json);
                 }
             }
         }
@@ -281,7 +265,7 @@ namespace GradeBook.GradeBooks
                              from type in assembly.GetTypes()
                              where type.FullName == "GradeBook.GradeBooks.StandardGradeBook"
                              select type).FirstOrDefault();
-            
+
             return JsonConvert.DeserializeObject(json, gradebook);
         }
     }
